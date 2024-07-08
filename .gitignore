@@ -5,3 +5,4 @@ avdata
 .DS_Store
 external/
 out/
+*.pyc
