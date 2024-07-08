@@ -1,0 +1,66 @@
+[tool.poetry]
+name = "stocks-server"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+mypy = "^1.10.1"
+ruff = "^0.5.0"
+types-requests = "^2.32.0.20240622"
+pandas = "^2.2.2"
+pandas-stubs = "^2.2.2.240603"
+toml = "^0.10.2"
+types-toml = "^0.10.8.20240310"
+matplotlib = "^3.9.1"
+yfinance = "^0.2.40"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.10.1"
+flake8 = "^7.0.0"
+ruff = "^0.5.0"
+black = "^24.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_configs = true
+
+[tool.ruff]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+select = ["E", "F"]
+# Dont automatically fix unused imports here
+ignore = ["F401"]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
+
+# F841 = Dont remove unused variables on save, it's annoying when refactoring
+unfixable = ["F841"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".git",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+]
+
+# I dont really care about long lines, unless they are criminally long
+line-length = 160
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.8
+target-version = "py38"
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10

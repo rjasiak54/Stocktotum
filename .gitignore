@@ -1,0 +1,7 @@
+cicd/local/env.toml
+venv*
+.venv*
+avdata
+.DS_Store
+external/
+out/

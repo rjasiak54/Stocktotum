@@ -1,0 +1,6 @@
+[submodule "external/crow"]
+	path = external/crow
+	url = https://github.com/crowcpp/crow.git
+[submodule "external/tomplusplus"]
+	path = external/tomplusplus
+	url = https://github.com/marzer/tomlplusplus.git
