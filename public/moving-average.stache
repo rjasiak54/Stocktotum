@@ -4,11 +4,12 @@
 <head>
     <title>stocks</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
 </head>
 
 <body>
     <h1>stocks</h1>
-    <h2>{{symbol}} - {{n_day}} Day SMA </h2>
+    <h2>{{symbol}}</h2>
 
     <canvas id="myChart" width="400" height="200"></canvas>
     <script>
@@ -17,17 +18,49 @@
             type: 'line',
             data: {
                 labels: [{{#timestamps}}'{{.}}',{{/timestamps}}],
-                datasets: [{
-                    label: 'Sample Data',
-                    data: [{{#avgs}} {{.}}, {{/avgs}}],
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
+                datasets: [
+                    {
+                        label: '{{n_day}} SMA',
+                        data: [{{#avgs}} {{.}}, {{/avgs}}],
+                        borderColor: 'red',
+                        borderWidth: 0.25
+                    }, {
+                        label: 'Closing Price (adj)',
+                        data: [{{#closing}} {{.}}, {{/closing}}],
+                        borderColor: 'orange',
+                        borderWidth: 0.25
+                    }, {
+                        label: '200 SMA',
+                        data: [{{#sma200}} {{.}}, {{/sma200}}],
+                        borderColor: 'purple',
+                        borderWidth: 0.25
+                    }
+                ]
             },
         options: {
             scales: {
                 y: {
                     beginAtZero: true
+                }
+            },
+            plugins: {
+                annotation: {
+                    annotations: [
+                        {{#verticalLines}}
+                        {
+                            type: 'line',
+                            mode: 'vertical',
+                            scaleID: 'x',
+                            value: '{{.}}',
+                            borderColor: 'blue',
+                            borderWidth: 1,
+                            label: {
+                                enabled: true,
+                                content: 'Buy/Sell'
+                            }
+                        },
+                        {{/verticalLines}}
+                    ]
                 }
             }
         }

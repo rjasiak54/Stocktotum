@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Data Chart</title>
+    <link rel="icon" href="data:,">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
+</head>
+
+<body>
+    <h1>sma</h1>
+    <div>
+        <label for="days_watch">SMA watch:</label>
+        <input type="number" id="days_watch" value="50" min="1">
+    </div>
+    <div>
+        <label for="days_baseline">SMA baseline:</label>
+        <input type="number" id="days_baseline" value="200" min="1">
+    </div>
+    <div>
+        <label for="symbol">Stock Symbol:</label>
+        <input type="text" id="symbol" value="AAPL">
+    </div>
+    <div>
+        <label for="startDatenInput">Date Range:</label>
+        <input type="date" id="startDate" value="">
+        <input type="date" id="endDate" value="">
+    </div>
+    <div>
+        <button id="updateButton" onclick="updateChart()">Update Chart</button>
+    </div>
+    <canvas id="stockChart"></canvas>
+
+    <script>
+        let chart;
+
+        async function fetchData(symbol, days_watch, days_baseline) {
+            // Replace with your API endpoint and key
+            const response = await fetch(`/lapi/ema/${days_watch}/${days_baseline}/${symbol}`);
+            const data = await response.json();
+            return data;
+        }
+
+        function updateChart() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            console.log(" dates: ", startDate, endDate);
+            if (startDate >= endDate) {
+                console.log("invalid dates: ", startDate, endDate);
+                return;
+            }
+
+            const days_watch = document.getElementById('days_watch').value;
+            const days_baseline = document.getElementById('days_baseline').value;
+            const symbol = document.getElementById('symbol').value;
+            fetchData(symbol, days_watch, days_baseline).then(data => {
+                console.log(data);
+                // const labels = data.map(item => item.date);
+                // const prices = data.map(item => item.price);
+                const labels = data.adj_close_points.map(item => item[1])
+                const closes = data.adj_close_points.map(item => item[0])
+                const watch = data.watch_points.map(item => item[0])
+                const bases = data.baseline_points.map(item => item[0])
+
+
+                var startIdx = 0;
+                var endIdx = labels.length - 1;
+                if (startDate) {
+                    for (var i = 0; i < labels.length; i++) {
+                        if (labels[i] >= startDate) {
+                            startIdx = i + 1;
+                            break;
+                        }
+                    }
+                }
+                if (endDate) {
+                    for (var i = startIdx; i < labels.length; i++) {
+                        if (labels[i] >= endDate) {
+                            endIdx = i;
+                            break;
+                        }
+                    }
+                }
+
+                var closes_map = Object();
+                for (var i = startIdx; i < endIdx; i++) {
+                    closes_map[labels[i]] = closes[i];
+                }
+                console.log(closes_map)
+                var vertLines = Object();
+                for (var i = 0; i < data.buys.length; i++) {
+                    let buy_date = data.buys[i];
+                    if (buy_date in closes_map) {
+                        vertLines[buy_date] = {
+                            type: 'line',
+                            mode: 'vertical',
+                            scaleID: 'x',
+                            value: buy_date,
+                            borderColor: 'black',
+                            borderWidth: 1,
+                            label: {
+                                enabled: true,
+                                content: `BUY ${Math.round(closes_map[buy_date] * 1000) / 1000}`,
+                                yAdjust: 30 * ((i % 5) + 1),
+                                backgroundColor: 'black',
+                            }
+                        }
+                    }
+                }
+                // for (const sell_date of data.sells) {
+                for (var i = 0; i < data.sells.length; i++) {
+                    let sell_date = data.sells[i];
+                    console.log(data.sells)
+
+                    console.log(sell_date)
+                    if (sell_date in closes_map) {
+                        let sell_price = closes_map[sell_date];
+                        let bought_price = closes_map[data.buys[i]];
+                        // closes_map[buy_date]
+                        let profit = sell_price - bought_price;
+                        var color = 'green';
+                        var letter = 'W';
+
+                        if (profit < 0) {
+                            color = 'red';
+                            letter = 'L';
+                        }
+                        vertLines[sell_date] = {
+                            type: 'line',
+                            mode: 'vertical',
+                            scaleID: 'x',
+                            value: sell_date,
+                            borderColor: color,
+                            borderWidth: 1,
+                            label: {
+                                enabled: true,
+                                content: `SELL ${Math.round(sell_price * 1000) / 1000}, ${letter} ${Math.round(profit * 1000) / 1000}`,
+                                yAdjust: -30 * ((i % 5) + 1),
+                                backgroundColor: color,
+                            }
+                        }
+                    }
+                }
+                console.log(vertLines)
+
+                if (chart) {
+                    chart.destroy();
+                }
+                console.log("")
+                const ctx = document.getElementById('stockChart').getContext('2d');
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels.slice(startIdx, endIdx),
+                        datasets: [{
+                            label: `Closing prices ${symbol}`,
+                            data: closes.slice(startIdx, endIdx),
+                            borderColor: 'blue',
+                            borderWidth: 1,
+                            fill: false
+                        }, {
+                            label: `watch`,
+                            data: watch.slice(startIdx, endIdx),
+                            borderColor: 'red',
+                            borderWidth: 1,
+                            fill: false
+                        }, {
+                            label: `baseline`,
+                            data: bases.slice(startIdx, endIdx),
+                            borderColor: 'orange',
+                            borderWidth: 1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                beginAtZero: true
+                            },
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            annotation: {
+                                annotations: vertLines
+                            }
+                        }
+                    },
+                });
+            }).catch(error => {
+                console.error('Error fetching data:', error);
+            });
+        }
+
+        function setTodaysDate() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+            const dd = String(today.getDate()).padStart(2, '0');
+            const formattedDate = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('endDate').value = formattedDate;
+        }
+
+        function setTodaysDateLastYear() {
+            const today = new Date();
+            const lastYear = new Date(today.setFullYear(today.getFullYear() - 5));
+            const yyyy = lastYear.getFullYear();
+            const mm = String(lastYear.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+            const dd = String(lastYear.getDate()).padStart(2, '0');
+            const formattedDate = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('startDate').value = formattedDate;
+        }
+
+
+        setTodaysDate()
+        setTodaysDateLastYear()
+        // Initialize the chart
+        updateChart();
+
+
+    </script>
+</body>
+
+</html>

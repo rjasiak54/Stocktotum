@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <map>
 #include <filesystem>
 #include <chrono>
 #include <iomanip>
@@ -74,6 +75,7 @@ namespace alphvant {
           public:
             std::string symbol;
             std::vector<intv::intv_daily_adj> intvs;
+            std::map<std::string, intv::intv_daily_adj> intvs_map;
             std::string base_url = api::domain +
                                    "query?function=TIME_SERIES_DAILY_ADJUSTED&"
                                    "outputsize=full&datatype=csv";
@@ -92,7 +94,9 @@ namespace alphvant {
 
                 while (getline(f, line)) {
                     auto i = intv::intv_daily_adj(line);
+
                     this->intvs.push_back(i);
+                    // this->intvs_map[i.timestamp] = i;
                 }
             }
 
